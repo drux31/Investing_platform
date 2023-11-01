@@ -23,11 +23,6 @@ start_date = '2023-01-01'
 end_date = '2023-03-01'
 
 # setting defualt configs
-'''
-default_args = {
-    'start_date':date.fromisoformat(start_date)
-}
-'''
 
 #Dag #1 - populating the platform
 @dag(dag_id='populating_platform', start_date=pendulum.datetime(2023, 1, 1, tz="UTC"), catchup=False, tags=['Initial_Load'])
