@@ -15,5 +15,5 @@ Some minor changes were made, compared to the tutorial :
 ## General architecture :
 First we build a first ETL to extract some historical data from the API and load it to the cloud Storage (Google) and BigQuery ; then we build a scheduled ETL to extract the data once a day and insert it into BigQuery, and finaly we create a platform to exploit the data, using Flask. Which gives the following overview :
 
-![Architecture overview](general_architecture.png)
+![Architecture overview](https://github.com/drux31/Investing_platform/blob/main/general_arch.png)
 
