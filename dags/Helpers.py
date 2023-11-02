@@ -1,6 +1,12 @@
 import requests
 import json
 import pandas as pd
+import os
+from dotenv import load_dotenv
+
+#loading environnment variables
+load_dotenv()
+GOOGLE_APPLICATION_CREDENTIALS = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
 
 #Task #1- extract rates dictionary
 def extract_rates(start_date:str, end_date:str) -> str:
