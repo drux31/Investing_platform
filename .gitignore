@@ -1,6 +1,7 @@
 # exclude the .env file
 .env
 dags/.env
+dags/rates.csv
 
 # Folders
 dags/__pycache__/*

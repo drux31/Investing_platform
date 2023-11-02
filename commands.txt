@@ -1,0 +1,22 @@
+--> airflow tutorial with docker
+https://airflow.apache.org/docs/apache-airflow/stable/tutorial/pipeline.html
+
+- Airflow :
+Dowload the yaml file :
+    >curl -LfO 'https://airflow.apache.org/docs/apache-airflow/2.7.2/docker-compose.yaml'
+
+setup the environment (Linux):
+    >mkdir -p ./dags ./logs ./plugins ./config
+    >echo -e "AIRFLOW_UID=$(id -u)" > .env
+
+Initialize the database:
+    > docker-compose up airflow-init
+
+Run aiflow :
+    > docker-compose up -d
+
+
+creating a dataframe from a list :
+-> Just fill the list first, then create a dataframe from the list.
+https://stackoverflow.com/questions/13784192/creating-an-empty-pandas-dataframe-and-then-filling-it
+

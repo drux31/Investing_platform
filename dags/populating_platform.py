@@ -1,22 +1,7 @@
 from airflow.decorators import task, dag
 
 from Helpers import *
-#from datetime import date
 import pendulum
-
-import os
-from dotenv import load_dotenv
-
-# Configs
-#For reading .env variable
-#dotenv_path = Path('~/de_project/Investing_platform/')
-#load_dotenv(dotenv_path=dotenv_path)
-#project_folder = os.path.expanduser('~/de_project/Investing_platform/')
-#load_dotenv(os.path.join(project_folder, '.env'))
-
-load_dotenv()
-#api_key= os.getenv('FIXER_API_KEY')
-#print (api_key)
 
 # Initial date
 start_date = '2023-01-01'
@@ -27,14 +12,27 @@ end_date = '2023-03-01'
 #Dag #1 - populating the platform
 @dag(dag_id='populating_platform', start_date=pendulum.datetime(2023, 1, 1, tz="UTC"), catchup=False, tags=['Initial_Load'])
 def populate_platform():
-    #task #1 - Extract rates from Fixer.io
+    #task #1 - Extract rates from frankfurter.app
     @task()
-    def task1_extract_rates(start_date, end_date):
+    def task1_extract_rates(start_date: str, end_date: str) -> str:
         results = extract_rates(start_date=start_date, end_date=end_date)
         return results
 
+    #task #2 - Extrate rates dictionary
+    @task()
+    def task2_extract_rates_dictionary(results: str) -> dict:
+        rates = extract_rates_dictionary(results=results)
+        return rates
+    
+    #task #3 - Create a dataframe
+    @task()
+    def task3_create_dataframe(rates: dict, start_date: str, end_date: str) -> None:
+        create_dataframe(rates=rates, start_date=start_date, end_date=end_date)
+    
     # Dependencies
     results = task1_extract_rates(start_date=start_date, end_date=end_date)
+    rates = task2_extract_rates_dictionary(results=results)
+    task3_create_dataframe(rates, start_date=start_date, end_date=end_date)
 
 #Instantiating the DAG
 populate_platform = populate_platform()
