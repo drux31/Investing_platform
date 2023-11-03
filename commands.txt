@@ -20,3 +20,16 @@ creating a dataframe from a list :
 -> Just fill the list first, then create a dataframe from the list.
 https://stackoverflow.com/questions/13784192/creating-an-empty-pandas-dataframe-and-then-filling-it
 
+Add google credential to the yaml file so docker has the informations.
+GOOGLE_APPLICATION_CREDENTIALS: /.google/credentials/google_credentials.json
+AIRFLOW_CONN_GOOGLE_CLOUD_DEFAULT: 'google-cloud-platform://?extra__google_cloud_platform__key_path=/.google/credentials/google_credentials.json'
+
+copy the directory from local to docker :
+- ~/.google/credentials/:/.google/credentials:ro
+
+in the python file :
+import the operator to use :
+- example for gcs : from airflow.providers.google.cloud.transfers.local_to_gcs import LocalFilesystemToGCSOperator
+
+
+

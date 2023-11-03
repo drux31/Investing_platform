@@ -2,6 +2,7 @@
 .env
 dags/.env
 dags/rates.csv
+personal_commands.txt
 
 # Folders
 dags/__pycache__/*

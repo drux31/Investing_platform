@@ -6,6 +6,8 @@ import pendulum
 # Initial date
 start_date = '2023-01-01'
 end_date = '2023-03-01'
+local_data = 'dags/rates.csv'
+rates_file = 'rates.csv'
 
 # setting defualt configs
 
@@ -28,11 +30,15 @@ def populate_platform():
     @task()
     def task3_create_dataframe(rates: dict, start_date: str, end_date: str) -> None:
         create_dataframe(rates=rates, start_date=start_date, end_date=end_date)
-    
+    #task #4 - Upload to GCS
+    @task()
+    def task4_load_to_gcs() -> None:
+        load_to_gcs(local_data=local_data, file_name=rates_file)
+
     # Dependencies
     results = task1_extract_rates(start_date=start_date, end_date=end_date)
     rates = task2_extract_rates_dictionary(results=results)
-    task3_create_dataframe(rates, start_date=start_date, end_date=end_date)
+    task3_create_dataframe(rates, start_date=start_date, end_date=end_date) >> task4_load_to_gcs()
 
 #Instantiating the DAG
 populate_platform = populate_platform()

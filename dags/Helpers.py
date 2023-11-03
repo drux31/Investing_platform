@@ -3,10 +3,13 @@ import json
 import pandas as pd
 import os
 from dotenv import load_dotenv
+from airflow.providers.google.cloud.transfers.local_to_gcs import LocalFilesystemToGCSOperator
 
 #loading environnment variables
 load_dotenv()
 GOOGLE_APPLICATION_CREDENTIALS = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+GOOGLE_PROJECT_ID = os.environ.get('GOOGLE_PROJECT_ID')
+GCS_BUCKET = os.environ.get('GCS_BUCKET')
 
 #Task #1- extract rates dictionary
 def extract_rates(start_date:str, end_date:str) -> str:
@@ -58,7 +61,7 @@ def create_dataframe(rates: dict, start_date: str, end_date: str, export_to_csv=
     '''
     print('into creation of dataframe')
     #Create a dataframe with the colums and indices from the first day's data
-    first_day_data = rates.get(str(start_date))
+    #first_day_data = rates.get(str(start_date))
     #print (first_day_data)
     '''
     if first_day_data is None:
@@ -68,7 +71,6 @@ def create_dataframe(rates: dict, start_date: str, end_date: str, export_to_csv=
     #Iterate over the dates from the start_date to the en_date
     dates = pd.date_range(start=start_date, end=end_date, freq='D')
     datas = []
-    valid_dates = []
     #print(rates.get(str('2023-02-27')))
 
     print('\nentering the loop')
@@ -77,10 +79,10 @@ def create_dataframe(rates: dict, start_date: str, end_date: str, export_to_csv=
         #print(data)
        
         if data is None:
+            #remove the date with no rates data
             dates = dates.drop(date)
             continue
         #Append the data for the date to the dataframe
-        #first_day_df = pd.concat([first_day_df, data], ignore_index=True)
         datas.append(data)
 
     first_day_df = pd.DataFrame(datas)
@@ -94,6 +96,34 @@ def create_dataframe(rates: dict, start_date: str, end_date: str, export_to_csv=
         first_day_df.to_csv('dags/rates.csv')
         #return None
     #return first_day_df
+
+#Task #4 Load raw data to cloud storage
+def load_to_gcs(local_data: str, file_name: str, **kwargs) -> None:
+    '''
+    Get or create a Google Cloud Storage Bucket.
+    Load the CSV file: rates.csv to the Storage Bucket.
+    Args:
+        -> None
+    Returns:
+        -> None    
+    '''
+    # Create storage client :
+    # storage_client = storage.Client()
+
+    try:
+        local_data = local_data
+        dst = file_name
+        upload_to_gcs_task = LocalFilesystemToGCSOperator (
+            task_id = 'local_to_gcs_stock_analysis',
+            bucket=GCS_BUCKET,
+            src=local_data,
+            dst=dst,
+        )
+        upload_to_gcs_task.execute(kwargs)
+        
+    except Exception as e:
+        print(f'Data load error: {str(e)}')
+
 '''
 Code to help debugging Helpers.py
 
