@@ -2,8 +2,11 @@ import requests
 import json
 import pandas as pd
 import os
+from airflow import models
+from airflow.utils.dates import days_ago
 from dotenv import load_dotenv
 from airflow.providers.google.cloud.transfers.local_to_gcs import LocalFilesystemToGCSOperator
+from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQueryOperator
 
 #loading environnment variables
 load_dotenv()
@@ -11,7 +14,11 @@ GOOGLE_APPLICATION_CREDENTIALS = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'
 GOOGLE_PROJECT_ID = os.environ.get('GOOGLE_PROJECT_ID')
 GCS_BUCKET = os.environ.get('GCS_BUCKET')
 
-#Task #1- extract rates dictionary
+DATASET_NAME = os.environ.get('BQ_DATASET')
+TABLE_NAME = os.environ.get('BQ_TABLE')
+GCS_URI = os.environ.get('GCS_URI')
+
+#1- extract rates dictionary
 def extract_rates(start_date:str, end_date:str) -> str:
     '''
     Extract Forex rates from frankfurter.app
@@ -30,7 +37,7 @@ def extract_rates(start_date:str, end_date:str) -> str:
 
     return results
 
-#Task #2 - extract the rates dictionary
+#2 - extract the rates dictionary
 def extract_rates_dictionary(results:str) -> dict:
     '''
     Extract the rates dictionary from frankfurter.app
@@ -44,8 +51,8 @@ def extract_rates_dictionary(results:str) -> dict:
     rates = data['rates']
     return rates
 
-#Task #3 - create a dataframe with the data
-def create_dataframe(rates: dict, start_date: str, end_date: str, export_to_csv=True) -> None: # pd.DataFrame:
+#3 - create a dataframe with the data
+def create_dataframe(rates: dict, start_date: str, end_date: str, export_to_csv=True) -> pd.DataFrame:
     '''
     Create a DataFrame from rates dictionary.
     Export the dataframe as a CSV file
@@ -59,25 +66,13 @@ def create_dataframe(rates: dict, start_date: str, end_date: str, export_to_csv=
     Returns:
         -> None (pd.DataFrame)
     '''
-    print('into creation of dataframe')
-    #Create a dataframe with the colums and indices from the first day's data
-    #first_day_data = rates.get(str(start_date))
-    #print (first_day_data)
-    '''
-    if first_day_data is None:
-        #Return an empty dataframe if there is no data from the start date
-        return None
-    '''   
     #Iterate over the dates from the start_date to the en_date
     dates = pd.date_range(start=start_date, end=end_date, freq='D')
     datas = []
-    #print(rates.get(str('2023-02-27')))
 
-    print('\nentering the loop')
     for date in dates.date:
         data = rates.get(str(date))
-        #print(data)
-       
+
         if data is None:
             #remove the date with no rates data
             dates = dates.drop(date)
@@ -87,17 +82,16 @@ def create_dataframe(rates: dict, start_date: str, end_date: str, export_to_csv=
 
     first_day_df = pd.DataFrame(datas)
 
-
     #Add dates to the dataframe
     first_day_df.index = dates.date
 
     #Export as CSV
     if export_to_csv == True:
         first_day_df.to_csv('dags/rates.csv')
-        #return None
-    #return first_day_df
 
-#Task #4 Load raw data to cloud storage
+    return first_day_df
+
+#4 Load raw data to cloud storage
 def load_to_gcs(local_data: str, file_name: str, **kwargs) -> None:
     '''
     Get or create a Google Cloud Storage Bucket.
@@ -107,9 +101,6 @@ def load_to_gcs(local_data: str, file_name: str, **kwargs) -> None:
     Returns:
         -> None    
     '''
-    # Create storage client :
-    # storage_client = storage.Client()
-
     try:
         local_data = local_data
         dst = file_name
@@ -124,6 +115,30 @@ def load_to_gcs(local_data: str, file_name: str, **kwargs) -> None:
     except Exception as e:
         print(f'Data load error: {str(e)}')
 
+#Task #5 - process data from rates.csv
+def process_rates(file_name: str = 'dags/rates.csv') -> pd.DataFrame:
+    '''
+    Process the rates Dataframes.
+    Convert format from the current file :
+        - date|AED|AFN|AMD|ANG ... etc.
+    To:
+        - date|symbol|rate
+    Args: 
+        -> rates_CSV_location(str) - The location of rates.csv
+    Returns:
+        -> None : create a processed CSV file and store it localy
+    '''
+    df_rates = pd.read_csv(file_name, index_col='Unnamed: 0')
+ 
+    # rotate df
+    stacked_df = pd.DataFrame(df_rates.stack().reset_index())
+    # name columns
+    stacked_df.columns = ['date','symbol','rate']
+    # reorder columns
+    reordered_df = pd.DataFrame(stacked_df,columns=['date','symbol','rate'])
+
+    return reordered_df
+   
 '''
 Code to help debugging Helpers.py
 

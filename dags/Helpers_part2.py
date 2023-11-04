@@ -30,7 +30,9 @@ def process_rates(file_name: str = 'dags/rates.csv') -> pd.DataFrame:
     #reordered_df.to_csv('dags/processed_rates.csv', index=False)
     return reordered_df
 
-#Task #6 Load to BigQuery
+
+
+#Task #7 Load to BigQuery
 def load_to_bq(df: pd.DataFrame) -> None:
     '''
     Read the given processed rates dataframe and export it to BigQuery
