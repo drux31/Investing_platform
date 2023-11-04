@@ -8,14 +8,14 @@ from Helpers import *
 from airflow.decorators import dag, task
 
 start_date_extraction = '2023-01-01'
-end_date_extraction = '2023-05-31'
+end_date_extraction = '2023-10-31'
 @dag(
     schedule=None,
     start_date=pendulum.datetime(2023, 1, 1, tz="UTC"),
     catchup=False,
     tags=["Populating platform: Investment platform"],
 )
-def test_investing_ptf_flow():
+def populating_platform():
     """
     ### Taskflow investing platform documentation
     A data pipeline to tests the ingestion of data from an online API frankfurter.app to GCP (storage and bigquery)
@@ -97,4 +97,4 @@ def test_investing_ptf_flow():
     rates = extract_rates_dictionary(results)
     local_files = transform_data(rates, start_date_extraction, end_date_extraction)
     load_data_to_gcs(local_files) >> load_gcs_to_bq
-test_investing_ptf_flow()
+populating_platform()
