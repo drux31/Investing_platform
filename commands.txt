@@ -31,5 +31,8 @@ in the python file :
 import the operator to use :
 - example for gcs : from airflow.providers.google.cloud.transfers.local_to_gcs import LocalFilesystemToGCSOperator
 
+In order to configure BigQuery from a python function, use the following :
+https://googleapis.dev/python/google-api-core/latest/auth.html
+https://codelabs.developers.google.com/codelabs/cloud-bigquery-python#0
 
 
