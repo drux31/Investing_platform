@@ -7,14 +7,16 @@ from Helpers import *
 from airflow.decorators import dag, task
 
 start_date_extraction = '2023-01-01'
-end_date_extraction = '2023-10-31'
+process_rates_path = 'dags/processed_rates.csv'
+next_date = get_next_date(process_rates_path)
+
 @dag(
-    schedule=None,
+    schedule_interval="0 8 * * *",
     start_date=pendulum.datetime(2023, 1, 1, tz="UTC"),
     catchup=False,
-    tags=["Populating platform: Investment platform"],
+    tags=["Populating platform: Insert new rates"],
 )
-def populating_platform():
+def insert_new_rates():
     """
     ### Taskflow investing platform documentation
     A data pipeline to tests the ingestion of data from an online API frankfurter.app to GCP (storage and bigquery)
@@ -67,14 +69,17 @@ def populating_platform():
         #### First Load task
         A task which takes local files and loads them to cloud storage
         """
+
         for file in local_file:
-            load_to_gcs(local_data=file, file_name=file[5:])
+            file_name = f'{next_date}/{file[5:]}'
+            load_to_gcs(local_data=file, file_name=file_name)
 
     ## Load from GCS to BigQuery
+    src_object = f'{next_date}/processed_rates.csv'
     load_gcs_to_bq = GCSToBigQueryOperator(
         task_id='gcs_to_bigquery_rates',
         bucket=GCS_BUCKET,
-        source_objects=['processed_rates.csv'],
+        source_objects=[src_object],
         destination_project_dataset_table=f"{GOOGLE_PROJECT_ID}.{DATASET_NAME}.{TABLE_NAME}",
         source_format='CSV',
         skip_leading_rows=1,
@@ -92,8 +97,8 @@ def populating_platform():
         A task which takes processed_file from GCS and load to BQ
         """
     )
-    results = extract_rates(start_date_extraction, end_date_extraction)
+    results = extract_rates(start_date_extraction, next_date)
     rates = extract_rates_dictionary(results)
-    local_files = transform_data(rates, start_date_extraction, end_date_extraction)
+    local_files = transform_data(rates, start_date_extraction, next_date)
     load_data_to_gcs(local_files) >> load_gcs_to_bq
-populating_platform()
+insert_new_rates()
