@@ -24,3 +24,4 @@ The pipeline consists of two dags :
 - a second one that loads daily data into BigQuery.
 The main difference between the two is that the end_date for data extraction from the API is parameterized.
 For the second dag, if the end date has no data, the API wil return the data from the prvious date. So I create a code that force to get the following date instead.
+The second DAG could also be changed to only fetch the data of the following day, instead of downloading all the data again.
