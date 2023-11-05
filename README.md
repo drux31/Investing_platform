@@ -18,4 +18,9 @@ First we build a first ETL to extract some historical data from the API and load
 
 ![Architecture overview](https://github.com/drux31/Investing_platform/blob/main/general_arch.png)
 
-The source code from the tutorial could be greatly simplified, but I did not bother in order to easily follow the steps.
+The code from the tutorial could be greatly simplified, but I did not bother in order to easily follow the steps.
+The pipeline consists of two dags : 
+- one that first loads a bunch of data to BigQuery ;
+- a second one that loads daily data into BigQuery.
+The main difference between the two is that the end_date for data extraction from the API is parameterized.
+For the second dag, if the end date has no data, the API wil return the data from the prvious date. So I create a code that force to get the following date instead.
